@@ -87,6 +87,7 @@ int read_directory(){
     if(entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0){
       printf("%s\n", entry->d_name);
       fp= fopen(entry->d_name,"r");
+      printf("hehehehe\n");
     }
   }
 
