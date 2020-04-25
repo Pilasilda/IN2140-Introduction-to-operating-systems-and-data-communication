@@ -74,23 +74,82 @@ void read_file(char *file){
 
 //read content in directory
 int read_directory(){
-  DIR* directory = opendir(".");
+  DIR* directory = opendir("big_set");
   struct dirent *entry;
   FILE* fp;
+  int lines,ch;
 
   if(directory == NULL){
     perror("Unable to read directory.");
     return(1);
   }
 
-  while((entry = readdir(directory)) != NULL){
-    if(entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0){
-      printf("%s\n", entry->d_name);
-      fp= fopen(entry->d_name,"r");
-      printf("hehehehe\n");
-    }
+  while((entry = readdir(directory))){
+    lines++;
+    printf("Files: %s\n",entry->d_name);
+    fp= fopen(entry->d_name,"r");
+    fread(entry->d_name,sizeof(entry->d_name),1,fp);
+    readPgmFile(fp);
   }
 
   closedir(directory);
+  //fclose(fp);
   return(0);
 }
+
+void readPgmFile(FILE* fp){
+  char* file;
+  fp = fopen(file, "r");
+
+  if(fp == NULL){
+    perror("Cannot open file to read. ");
+    exit(EXIT_FAILURE);
+  }
+
+  pgm = img_read_pgm(fp);
+  fclose(fp);
+
+  //return pgm;
+}
+
+/*void *img_read_pgm(FILE* fp){
+  int char1, char2,a,b,c;
+  int w,h;
+  char data;
+  pgm = Image_alloc(w,h);
+
+  char1 = fgetc(fp);
+  char2 = fgetc(fp);
+  a =fscanf(fp, "%d", &w);
+  b =fscanf(fp,"%d", &h);
+  c =fscanf(fp,"%s", &data);
+
+  if(char1 != 'P' || char2 != '5'|| a != 1 || b != 1 || c != 1){
+        printf("Input not a standard pgm-file\n");
+        //return NULL;
+  }
+
+  fgetc(fp);
+  //return pgm;
+}*/
+
+
+
+
+
+ void *img_read_pgm(FILE* fp){
+   int char1, char2, a,b,c;
+   int w,h;
+   char data;
+
+   pgm = Image_alloc(w,h);
+
+   char1 = fgetc(fp);
+   char2 = fgetc(fp);
+   a = fscanf(fp,"%d", &w);
+   b = fscanf(fp, "%d", &h);
+   c = fscanf(fp, "%sdata", &data);
+
+   fgetc(fp);
+   return pgm;
+ }
