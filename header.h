@@ -9,17 +9,20 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include "pgmread.c"
-
-#define MAX 1000
+#include "pgmread.h"
 
 //Pointer to one image
 struct Image *pgm;
+char* buffer[1000];
+char* buffer1[1000];
 
 void read_file(char*);
-int count_lines(char*, int);
-int read_directory();
+int count_lines(char*);
+void read_directory();
 void run_server(int);
 
-void readPgmFile(FILE*);
-void *img_read_pgm(FILE*);
+void read_image(char*);
+void skipComments(FILE*);
+//void readPgmFile();

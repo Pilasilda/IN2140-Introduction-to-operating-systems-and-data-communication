@@ -1,37 +1,4 @@
 #include "header.h"
-
-int main(int argc, char* argv[]){
-  //char *file;
-  struct sockaddr_in serveraddr;
-  int udp_socket, count;
-  char buffer[1000];
-  char *msg = "Hello server";
-
-  bzero(&serveraddr, sizeof(serveraddr));
-  serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-  serveraddr.sin_port = htons(5000);
-  serveraddr.sin_family = AF_INET;
-
-  //create udp socket
-  udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
-
-  //connect socket
-  if(connect(udp_socket, (struct sockaddr*)&serveraddr,sizeof(serveraddr)) < 0){
-    perror("Error while creatng socket");
-    exit(EXIT_FAILURE);
-  }
-
-  sendto(udp_socket, msg, MAX,0, (struct sockaddr*) NULL, sizeof(serveraddr));
-  recvfrom(udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL,NULL);
-  //puts(buffer);
-  //printf("Message sent from server: %s\n", buffer);
-
-  //Close socket descriptor
-  read_file(argv[1]);
-  read_directory();
-  close(udp_socket);
-}
-
 //Number of lines in textfile
 int count_lines(char* file,int ch){
   FILE *fp = fopen(file, "r");
@@ -75,81 +42,136 @@ void read_file(char *file){
 //read content in directory
 int read_directory(){
   DIR* directory = opendir("big_set");
+  char buffer[1000];
   struct dirent *entry;
   FILE* fp;
-  int lines,ch;
+  int lines,ch,i;
 
   if(directory == NULL){
     perror("Unable to read directory.");
     return(1);
   }
 
-  while((entry = readdir(directory))){
-    lines++;
-    printf("Files: %s\n",entry->d_name);
-    fp= fopen(entry->d_name,"r");
-    fread(entry->d_name,sizeof(entry->d_name),1,fp);
-    readPgmFile(fp);
-  }
+    while((entry = readdir(directory)) != NULL){
+      lines++;
+      //skip current and parent directory
+      if(!strcmp(entry->d_name, ".")){
+        continue;
+      }
+      if(!strcmp(entry->d_name,"..")){
+        continue;
+      }
 
+      //printf("%s\n",entry->d_name);
+      if(entry->d_type != DT_REG){
+        continue;
+      }
+
+      sprintf(buffer,"%s",entry->d_name);
+      //printf("%s\n",buffer);
+    }
   closedir(directory);
-  //fclose(fp);
   return(0);
 }
 
-void readPgmFile(FILE* fp){
-  char* file;
-  fp = fopen(file, "r");
+void skipComments(FILE *fp)
+{
+    int ch;
+    char line[100];
+    while ((ch = fgetc(fp)) != EOF && isspace(ch)) {
+        ;
+    }
 
-  if(fp == NULL){
-    perror("Cannot open file to read. ");
+    if (ch == '#') {
+        fgets(line, sizeof(line), fp);
+        skipComments(fp);
+    } else {
+        fseek(fp, -1, SEEK_CUR);
+    }
+}
+
+
+void read_image(char*file){
+ FILE* fp = fopen(file,"rb");
+
+ char type[255];
+ int j,i,max_grey,word;
+
+ if(file == NULL){
+   fprintf(stderr, "Empty file: %s\n",file);
+   exit(1);
+ }
+
+  pgm = malloc(sizeof(struct Image));
+
+  printf("Reading PGM file: %s\n",file);
+  fscanf(fp,"%s", type);
+
+ if(strcmp(type,"P2") == 0){
+  printf("Valid file type\n");
+ }
+
+  skipComments(fp);
+  //get Weight,height
+  fscanf(fp,"%d",&pgm->width);
+  skipComments(fp);
+  fscanf(fp,"%d", &pgm->height);
+  skipComments(fp);
+  fscanf(fp, "%d", &max_grey);
+  skipComments(fp);
+
+  printf("WIDTH: %d, HEIGHT: %d\n", pgm->width, pgm->height);
+
+  pgm->data = malloc(sizeof(unsigned char*) *pgm->width *pgm->height);
+
+  for(i =0; i < pgm->height*pgm->width; i++){
+    fscanf(fp, "%s", &pgm->data[i]);
+    printf("%d\n",pgm->data[i]);
+  }
+
+  printf("Loaded PGM. Size: %dx%d, Greyscale: %d\n",pgm->width, pgm->height,max_grey+1);
+  fclose(fp);
+}
+
+
+
+
+int main(int argc, char* argv[]){
+  //char *file;
+  struct sockaddr_in serveraddr;
+  int udp_socket, count,ch;
+  char buffer[1000];
+  char *msg = "Hello server";
+
+  bzero(&serveraddr, sizeof(serveraddr));
+  serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  serveraddr.sin_port = htons(5000);
+  serveraddr.sin_family = AF_INET;
+
+  //create udp socket
+  udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
+
+  //connect socket
+  if(connect(udp_socket, (struct sockaddr*)&serveraddr,sizeof(serveraddr)) < 0){
+    perror("Error while creatng socket");
     exit(EXIT_FAILURE);
   }
 
-  pgm = img_read_pgm(fp);
-  fclose(fp);
+  sendto(udp_socket, msg, MAX,0, (struct sockaddr*) NULL, sizeof(serveraddr));
+  recvfrom(udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL,NULL);
+  //puts(buffer);
+  //printf("Message sent from server: %s\n", buffer);
 
-  //return pgm;
-}
+  //Close socket descriptor
+  int t = count_lines(argv[1],ch);
+  read_file(argv[1]);
 
-/*void *img_read_pgm(FILE* fp){
-  int char1, char2,a,b,c;
-  int w,h;
-  char data;
-  pgm = Image_alloc(w,h);
+  int c = read_directory();
+  sprintf(buffer,"%d",c);
+  int i;
 
-  char1 = fgetc(fp);
-  char2 = fgetc(fp);
-  a =fscanf(fp, "%d", &w);
-  b =fscanf(fp,"%d", &h);
-  c =fscanf(fp,"%s", &data);
-
-  if(char1 != 'P' || char2 != '5'|| a != 1 || b != 1 || c != 1){
-        printf("Input not a standard pgm-file\n");
-        //return NULL;
+  for(i=0; i<t; i++){
+    read_image(&buffer[i]);
   }
-
-  fgetc(fp);
-  //return pgm;
-}*/
-
-
-
-
-
- void *img_read_pgm(FILE* fp){
-   int char1, char2, a,b,c;
-   int w,h;
-   char data;
-
-   pgm = Image_alloc(w,h);
-
-   char1 = fgetc(fp);
-   char2 = fgetc(fp);
-   a = fscanf(fp,"%d", &w);
-   b = fscanf(fp, "%d", &h);
-   c = fscanf(fp, "%sdata", &data);
-
-   fgetc(fp);
-   return pgm;
- }
+  close(udp_socket);
+}
