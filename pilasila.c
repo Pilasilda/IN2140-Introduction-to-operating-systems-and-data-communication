@@ -8,6 +8,7 @@ void freeBuffer(int t, char *buffer[]) {
   }
 }
 
+//reading txt file
 void read_file(char *file){
   FILE *fp = fopen(file, "r");
   int ch,lines,i;
@@ -24,11 +25,10 @@ void read_file(char *file){
 
   if (file != NULL) {
     while(fscanf(fp, "%s", contents) != EOF) {
-      buffer1[teller] = malloc(strlen(contents) + 1);
-      strcpy(buffer1[teller], contents);
+      buffer[teller] = malloc(strlen(contents) + 1);
+      strcpy(buffer[teller], contents);
       teller++;
     }
-
   }
   fclose(fp);
 }
@@ -38,8 +38,6 @@ void read_directory(){
   DIR* directory = opendir("big_set");
   struct dirent *entry;
   char* pgmFile;
-  FILE* fp;
-  int i;
   int lines = 0;
 
   if(directory == NULL){
@@ -55,83 +53,76 @@ void read_directory(){
       if(!strcmp(entry->d_name,"..")){
         continue;
       }
-      if(entry->d_type != DT_REG){
-        continue;
-      }
 
       pgmFile = entry->d_name;
-      buffer[lines] = malloc(strlen(pgmFile));
-      strcpy(buffer[lines],pgmFile);
+      buffer1[lines] = malloc(strlen(pgmFile));
+      strcpy(buffer1[lines],pgmFile);
+      //printf("%s\n",buffer1[lines]);
       lines++;
-
     }
   closedir(directory);
 }
 
-void skipComments(FILE *fp)
-{
-    int ch;
-    char line[100];
-    while ((ch = fgetc(fp)) != EOF && isspace(ch)) {
-        ;
+static void skip_whites_and_comments(FILE * f){
+    int c;
+    do{
+        while(isspace(c=getc(f))); /* skip spaces */
+        if(c=='#') /* skip comments */
+            while( c!='\n' && c!='\r' && c!=EOF )
+                c=getc(f);
     }
-
-    if (ch == '#') {
-        fgets(line, sizeof(line), fp);
-        skipComments(fp);
-    } else {
-        fseek(fp, -1, SEEK_CUR);
-    }
+    while( c == '#' || isspace(c) );
+    if( c != EOF && ungetc(c,f) == EOF )
+      printf("Error: unable to 'ungetc' while reading PGM file.\n");
 }
 
 
 void read_image(char* file){
- FILE* fp = fopen(file,"rb");
- pgm = malloc(sizeof(struct Image));
-
+ FILE* fp = fopen(file,"r");
  char type[255];
  int j,i,max_grey,word;
 
- if(file == NULL){
-   fprintf(stderr, "Empty file: %s\n",file);
+ if(fp == NULL){
+   printf("Empty file.\n");
    exit(1);
  }
 
  if(feof(fp)){
-   printf("End of file reached.\n");
-   exit(1);
+   printf("END OF FILE\n");
  }
 
- if(fp == NULL){
-   fprintf(stderr, "Bad file %s\n", file);
- }
-
+ pgm = malloc(sizeof(struct Image));
  printf("Reading PGM file: %s\n",file);
 
- fscanf(fp,"%s", type);
- if(strcmp(type,"P2") == 0){
-  printf("Valid file type: %s\n", type);
+ fgets(type,sizeof(type), fp);
+ //fscanf(fp,"%254s",type);
+ if(strcmp(type,"P5") == 0){
+  fprintf(stderr, "Wrong file type\n");
+  exit(EXIT_FAILURE);
  }
-  skipComments(fp);
+
   //get Weight,height
+  skip_whites_and_comments(fp);
   fscanf(fp,"%d",&pgm->width);
-  skipComments(fp);
+  skip_whites_and_comments(fp);
   fscanf(fp,"%d", &pgm->height);
-  skipComments(fp);
+  skip_whites_and_comments(fp);
   fscanf(fp, "%d", &max_grey);
-  skipComments(fp);
+  fgetc(fp);
 
   printf("WIDTH: %d, HEIGHT: %d\n", pgm->width, pgm->height);
   printf("Max_grey value: %d\n",max_grey);
+  printf("\n");
 
   fgetc(fp);
   for(i =0; i < pgm->height; i++){
     pgm->data = malloc(pgm->width * pgm->height* sizeof(unsigned char*));
     fread(pgm->data, sizeof(unsigned char*),pgm->width,fp);
-    printf("%s\n",pgm->data);
+    //printf("%s",pgm->data);
   }
   //printf("Loaded PGM. Size: %dx%d, Greyscale: %d\n",pgm->width, pgm->height,max_grey+1);
   fclose(fp);
+  free(pgm);
 }
 
 int count_lines(char* file) {
@@ -150,20 +141,40 @@ int count_lines(char* file) {
   return lines;
 }
 
+/*void addEntry(char* buffer){
+  int w, h;
+  unsigned char *d;
+  struct Image* tempNode,*iterator;
+  tempNode->width = w;
+  tempNode->height = h;
+  tempNode->data = d;
+
+  tempNode = (struct Image*) malloc(sizeof(struct Image));
+}*/
+
 
 int main(int argc, char* argv[]){
-  //char buffer[1000];
   char ch;
-  int i;
+  int i,j;
   int t = count_lines(argv[1]);
-  read_file(argv[1]);
-  read_directory();
+  pgm = malloc(sizeof(struct Image));
 
-  for(i=0; i<sizeof(buffer1); i++){
-    printf("%s\n", buffer1[i]);
-    read_image(buffer1[i]);
-    //Image_create(buffer[i]);
+  read_file(argv[1]);
+  /*for(i=0;i<t;i++){
+    printf("%s\n",buffer[i]);
+  }*/
+
+  read_directory();
+  /*for(i=0;i<t;i++){
+    printf("%s\n",buffer1[i]);
+  }*/
+
+  for(j=0; j<t; j++){
+    read_image(buffer[j]);
+    pgm = Image_create(buffer[j]);
   }
 
   freeBuffer(t, buffer1);
+  freeBuffer(t,buffer);
+  free(pgm);
 }

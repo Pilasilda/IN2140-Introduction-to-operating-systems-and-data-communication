@@ -22,7 +22,6 @@ void read_file(char*);
 int count_lines(char*);
 void read_directory();
 void run_server(int);
-
 void read_image(char*);
-void skipComments(FILE*);
+static void skip_whites_and_comments(FILE *);
 //void readPgmFile();
