@@ -148,7 +148,6 @@ int count_lines(char* file) {
   tempNode->width = w;
   tempNode->height = h;
   tempNode->data = d;
-
   tempNode = (struct Image*) malloc(sizeof(struct Image));
 }*/
 
