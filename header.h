@@ -23,9 +23,17 @@ struct header{
   int rest;
 };
 
-//printer to header
-struct header *head;
-char *data;
+struct node{
+  char magic_number[2];
+  int width;
+  int height;
+  int max_value;
+  int rest;
+  unsigned char* data;
+  struct node* next;
+};
+
+char* data;
 
 //Pointer to one image
 struct Image *pgm;
@@ -37,11 +45,9 @@ void read_file(char*);
 int count_lines(char*);
 void read_directory();
 void run_server(int);
-void read_image(char*);
+void readthis(char*);
+char read_image(char*);
 int filesize(char*);
-static void skip_whites_and_comments(FILE *);
 char* serialize_int(char*,int);
 char* serialize_char(char*, char);
 char* serialize_header();
-
-//void readPgmFile();

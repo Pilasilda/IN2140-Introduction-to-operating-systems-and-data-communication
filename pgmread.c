@@ -115,4 +115,3 @@ struct Image* Image_create( char* buffer )
 
     return image;
 }
-
