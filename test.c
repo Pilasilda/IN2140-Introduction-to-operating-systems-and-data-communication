@@ -1,6 +1,4 @@
-#include "header.h"
-char* star[1000];
-char* buffer1[1000];
+#include "headerK.h"
 
 typedef struct pcknode{
   int length;
@@ -8,9 +6,11 @@ typedef struct pcknode{
   unsigned char ack;
   unsigned char flags;
   unsigned char unused;
-  unsigned char *buff; //buffer is data we want to send, need to make a function to send it, read one into buffer and data stream, sending buffer, server takes a buffer as a bytes
+  char *buff; //buffer is data we want to send, need to make a function to send it, read one into buffer and data stream, sending buffer, server takes a buffer as a bytes
   struct pcknode *next;
 }packetNode;
+
+packetNode *new;
 
 void addNode(packetNode **list, packetNode *new){
   if(list == NULL){
@@ -21,6 +21,7 @@ void addNode(packetNode **list, packetNode *new){
     *list = new;
   }
 }
+
 
 void removeNode(packetNode **list, unsigned char seqNum){
   if(list == NULL)
@@ -48,34 +49,21 @@ void removeNode(packetNode **list, unsigned char seqNum){
 
 //global stuff;
 packetNode **packetList;
-int id = 0;
-char* start;
-
-
-void freeBuffer(int t, char *buffer[]) {
-  int i;
-  for(i = 0; i < t; ++i) {
-    free(buffer[i]);
-  }
-}
+int idcount = 0;
 
 int count_lines(char* file) {
-  char c;
-  int count = 0;
-  FILE* fp = fopen(file, "r");
-  if (fp == NULL) {
-    perror("countLines: Error opening textfile");
-    return(-1);
-  }
-  c = fgetc(fp);
-  while(c != EOF) {
-    if(c == '\n') {
-      count++;
+  FILE *fp = fopen(file, "r");
+  int lines = 0;
+  char ch;
+  do{
+    ch = fgetc(fp);
+    if(ch == '\n'){
+      lines++;
     }
-    c = fgetc(fp);
-  }
-  fclose(fp);
-  return count;
+  }while(ch != EOF);
+
+  rewind(fp);
+  return lines;
 }
 
 //reading txt file
@@ -84,21 +72,20 @@ void read_file(char *file){
   int teller = 0;
   FILE* fp = fopen(file, "r");
 
-  if(fp == NULL) {
-    perror("readFileNames: Error opening textfile");
-    exit(-1);
+if(fp == NULL) {
+  perror("readFileNames: Error opening textfile");
+  exit(-1);
+}
+if (file != NULL) {
+  while(fscanf(fp, "%s", str) != EOF) {
+    buffer[teller] = malloc(sizeof(str) + 1);
+    strcpy(buffer[teller], str);
+
+    teller++;
   }
+}
 
-  if (file != NULL) {
-    while(fscanf(fp, "%s", str) != EOF) {
-      star[teller] = malloc(sizeof(str) + 1);
-      strcpy(star[teller], str);
-
-      teller++;
-    }
-  }
-
-  fclose(fp);
+fclose(fp);
 }
 
 //read content in directory
@@ -131,7 +118,7 @@ void read_directory(){
   closedir(directory);
 }
 
-void readthis(char* file){
+void readPGM(char* file){
   FILE* fp = fopen(file,"r");
   unsigned long filelen;
   int f;
@@ -154,26 +141,25 @@ void readthis(char* file){
   fseek(fp,0,SEEK_SET);
 
   f = fread(data,1,filelen,fp);
-  packetNode *new = malloc(sizeof(packetNode));
-  new->id = f;
-  //i++;
-  new->flags = 0x1;
-  new->length = f; //++ need to find a way to add the length of the whole file
+
+  packetNode *new;
+  new = malloc(sizeof(packetNode));
+  new->length = f;
+  new->id = idcount;
+  idcount++;
   new->buff = data;
+  new->flags = 0x1;
   addNode(packetList, new);
+  printf("Bytes read: %d\n", new->length);
+  //printf("Flags: %c\n", new->flags);
+
+  //printf("Bytes read: %d\n",f);
 
   //Image_create(data);
-  printf("%d bytes read.\n",f);
+  //printf("%d bytes read.\n",f);
   fclose(fp);
 }
 
-//void create_payload(){
-  //struct header pack;
-  //int i;
-  //for(i = 0; i < sizeof(data); i++){
-    //printf("%d\n", f);
-  //}
-//)}
 
 
 int main(int argc, char* argv[]){
@@ -184,12 +170,14 @@ int main(int argc, char* argv[]){
   read_directory();
 
   for(i=0; i<t; i++){
-    readthis(buffer1[i]);
+    readPGM(buffer[i]);
   }
 
+  printf("%s\n",new->length);
+
+
+
+
+  //free(packetList);
   free(data);
-  freeBuffer(t, &start);
-  freeBuffer(t, buffer1);
-  //printf("%s\n", data);
-  //printf("%s",data);
 }

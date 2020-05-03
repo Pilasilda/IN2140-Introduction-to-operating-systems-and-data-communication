@@ -11,30 +11,25 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <libgen.h>
-
 #include "pgmread.c"
 #include "pgmread.h"
-#include "protocol.c"
+#define MAGICNUM "P2"
 
-struct packet{
-  char* filename;
-  char* data;
-  unsigned char seq_number;
-  unsigned char unused;
-  unsigned char filelen;
-};
-
-
-int f;
+//printer to header
 char* data;
+
+//Pointer to one image
+struct Image *pgm;
+
 char* buffer[1000];
 char* buffer1[1000];
-unsigned long filelen;
-struct packet *head;
 
 void read_file(char*);
 int count_lines(char*);
 void read_directory();
-long readPGM(char*);
+void run_server(int);
+void read_image(char*);
 int filesize(char*);
-struct packet* create_packet();
+char* serialize_int(char*,int);
+char* serialize_char(char*, char);
+char* serialize_header();

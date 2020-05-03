@@ -39,7 +39,7 @@ fclose(fp);
 
 //read content in directory
 void read_directory(){
-  DIR* directory = opendir("big_set");
+  DIR* directory = opendir("big_set/");
   struct dirent *entry;
   char* pgmFile;
   int lines = 0;
@@ -67,7 +67,7 @@ void read_directory(){
   closedir(directory);
 }
 
-void readPGM(char* file){
+long readPGM(char* file){
   FILE* fp = fopen(file,"r");
   unsigned long filelen;
   int f;
@@ -88,36 +88,38 @@ void readPGM(char* file){
   filelen = ftell(fp);
   data = malloc(filelen+1);
   fseek(fp,0,SEEK_SET);
-
   f = fread(data,1,filelen,fp);
 
-  struct header*head;
-  head = malloc(sizeof(struct header));
-  head->length = f;
-  head->data = data;
-  //printf("Bytes read: %s\n",head->data);
-
-  //printf("%d bytes read.\n",f);
   fclose(fp);
+  return filelen;
 }
 
 
-void create_packet(char* buffer){
-  printf("Bytes read: %d\n",f);
+struct packet* create_packet(char *data,long byte, int b){
+  printf("hehehe\n");
+  //head->seq_number = b;
+  head->filename = buffer[b];
+  head->filelen = strlen(buffer[b]);
+  head->data = malloc(byte*b);
+  head->data = data;
+  printf("Fillengde:%c Filnavn:%s Data%s",head->filelen,head->filename,head->data);
+  return head;
 }
 
 
 int main(int argc, char* argv[]){
   char ch;
   int i;
+  long b;
   int t = count_lines(argv[1]);
   read_file(argv[1]);
   read_directory();
-  for(i=0; i<t; i++){
-    readPGM(buffer[i]);
-    create_packet(buffer[i]);
-  }
-  //create_packet();
 
-  free(data);
+  for(i=0; i<t; i++){
+    b = readPGM(buffer[i]);
+    //calling function struct packet to create packet with payload
+    struct packet *pack = create_packet(data,b,i);
+  }
+
+  //free(data);
 }
