@@ -13,41 +13,34 @@
 #include <libgen.h>
 #include "pgmread.c"
 #include "pgmread.h"
+#include "protocol.c"
 #define MAGICNUM "P2"
 
 struct header{
-  char magic_number[2];
-  int width;
-  int height;
-  int max_value;
-  int rest;
-};
-
-struct node{
-  char magic_number[2];
-  int width;
-  int height;
-  int max_value;
-  int rest;
+  int length;
+  unsigned char seq_number;
+  unsigned char seq_ack;
+  unsigned char flagg;
+  unsigned char unused;
   unsigned char* data;
-  struct node* next;
 };
 
-char* data;
 
-//Pointer to one image
-struct Image *pgm;
-
+int f;
+unsigned char* data;
 char* buffer[1000];
 char* buffer1[1000];
+unsigned long filelen;
+
 
 void read_file(char*);
 int count_lines(char*);
 void read_directory();
 void run_server(int);
 void readthis(char*);
-char read_image(char*);
+void readPGM(char*);
 int filesize(char*);
 char* serialize_int(char*,int);
 char* serialize_char(char*, char);
 char* serialize_header();
+void create_packet(char*);

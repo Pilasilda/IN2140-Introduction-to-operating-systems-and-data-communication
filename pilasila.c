@@ -1,18 +1,9 @@
 #include "header.h"
 
-
-/*void freeBuffer(int t, char *buffer[]) {
-  int i;
-  for(i = 0; i < t; ++i) {
-    free(buffer[i]);
-  }
-}*/
-
 int count_lines(char* file) {
   FILE *fp = fopen(file, "r");
   int lines = 0;
   char ch;
-
   do{
     ch = fgetc(fp);
     if(ch == '\n'){
@@ -76,7 +67,7 @@ void read_directory(){
   closedir(directory);
 }
 
-void readthis(char* file){
+void readPGM(char* file){
   FILE* fp = fopen(file,"r");
   unsigned long filelen;
   int f;
@@ -100,11 +91,20 @@ void readthis(char* file){
 
   f = fread(data,1,filelen,fp);
 
-  Image_create(data);
-  printf("%d bytes read.\n",f);
+  struct header*head;
+  head = malloc(sizeof(struct header));
+  head->length = f;
+  head->data = data;
+  //printf("Bytes read: %s\n",head->data);
+
+  //printf("%d bytes read.\n",f);
   fclose(fp);
 }
 
+
+void create_packet(char* buffer){
+  printf("Bytes read: %d\n",f);
+}
 
 
 int main(int argc, char* argv[]){
@@ -113,14 +113,11 @@ int main(int argc, char* argv[]){
   int t = count_lines(argv[1]);
   read_file(argv[1]);
   read_directory();
-
   for(i=0; i<t; i++){
-    readthis(buffer[i]);
+    readPGM(buffer[i]);
+    create_packet(buffer[i]);
   }
+  //create_packet();
 
   free(data);
-  //free(buffer);
-  free(buffer1);
-  //printf("%s\n", data);
-  //printf("%s",data);
 }
