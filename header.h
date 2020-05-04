@@ -18,13 +18,13 @@
 #define TIMEOUT 5
 #define MAX 1024
 
-typedef struct payload{
+struct payload{
   char* filename;
   char* data;
-  unsigned char seq_number;
+  int seq_number;
   unsigned char filelen;
   struct payload *next;
-}packet;
+};struct payload *pay;
 
 struct header{
   int length;
@@ -37,11 +37,10 @@ struct header{
 
 int f;
 char* data;
-struct payload *pay;
+char *header;
 char* buffer[1000];
 char* buffer1[1000];
 unsigned long filelen;
-int windowlength;
 
 struct payload** linkedlist;
 
@@ -50,9 +49,12 @@ int count_lines(char*);
 void read_directory();
 long readPGM(char*);
 int filesize(char*);
-void addNodeToList(packet**, packet*);
-void removeNode(packet **, unsigned char);
+void addNodeToList(struct payload**, struct payload*);
+void removeNode(struct payload **, int);
 void displayList();
 int runudp();
-struct payload* create_packet(char *,long, int);
-struct header* create_header(char*,int,long);
+//struct payload* create_packet(char *,long, int);
+//struct header* create_header(char*,int,long);
+void display(struct payload*);
+char* create_payload(int,long, int,char*);
+//char* create_header(int, unsigned char, unsigned char, unsigned char);

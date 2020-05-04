@@ -125,9 +125,9 @@ long readPGM(char* file){
   free(data);
 }
 
-struct payload* create_packet(char *data,long byte, int b){
+/*struct payload* create_packet(char *data,long byte, int b){
   pay = malloc(sizeof(struct payload));
-  char * base = basename(buffer[b+'\0']);
+  char * base = basename(buffer[b]);
 
   pay->seq_number = b;
   pay->filename = base;
@@ -138,41 +138,63 @@ struct payload* create_packet(char *data,long byte, int b){
   return pay;
   free(pay);
   free(pay->data);
-}
+}*/
 
-struct header* create_header(char*data,int i,long c){
-  unsigned int payload;
-  unsigned int ack;
-  unsigned int termination;
-  int total;
-  int sizeofdata = sizeof(data);
+char* create_header(int length, unsigned char seq_num, unsigned char seq_num_last, unsigned char flags){
+  //rekkefølge er fra assignment er
+  // <<fil lengde, seq_num, seq_num_last, flags, unused = 0x7f(alltid);
+  // så lengde for char in bytes er, int+char+char+char+char
+  header = malloc(sizeof(int) + sizeof(char) * 4);
+  int len;
+  len = length;
   unsigned char unused = 0x7f;
-
-  struct header*head = malloc(sizeof(int) + sizeof(char)*4);
-  int length = (sizeof(struct packet*)+(struct payload*)+sizeofdata);
-
-  //printf("%d\n",head->length);
-  return head;
-  free(head);
+  //memcpy, shifter plass og setter griene inni riktig rekkefølge
+  //samme som header.len(som har size int) = len
+  memcpy(header, &len, sizeof(int));
+  //header må shift plass til char, så samme som indexing inni en array, hvis det gir mening
+  //måter for å gjøre der er nede
+  memcpy(header + sizeof(int), &seq_num, 1);
+  memcpy(header + sizeof(int) + sizeof(char), &seq_num_last, 1);
+  memcpy(header + sizeof(int) + sizeof(char) + sizeof(char), &flags, 1);
+  memcpy(header + sizeof(int) + sizeof(char) + sizeof(char) + sizeof(char), &unused, 1);
+  return header;
 }
 
-void addNodeToList(struct payload **list, struct payload *newlist){
+//payload
+char* create_payload(int uid,long byte, int b,char* data){
+  char* base = basename(buffer[b]);
+  char *payload = malloc(sizeof(int) * 2 + sizeof(char) + sizeof(int));
+  char* bytesofimages;
+  char* filename;
+  int i = uid;
+
+  int length = strlen(buffer[b]);
+  bytesofimages = malloc(byte*b);
+  bytesofimages = data;
+
+  memcpy(header, &uid, sizeof(int));
+  //memcpy(header + sizeof(int) * 2, &length, sizeof(int));
+  //memcpy(header + sizeof(int) * 2 + sizeof(char), &base, 1);//usikker siden det er navn av fil
+  //memcpy(header + sizeof(int) *2 + sizeof(char) + sizeof(int), &bytesofimages, sizeof(int));
+  return payload;
+}
+
+/*void addNodeToList(packet **list, packet*new){
   if(list == NULL){
-    newlist->next = NULL;
-    list = &newlist;
+    new->next = NULL;
+    list = &new;
   }else{
-    newlist->next = *list;
-    *list = newlist;
+    new->next = *list;
+    *list = new;
   }
-  //printf("%s\n",newlist->data);
 }
 
-void removeNode(struct payload **list, int seqnumber){
+void removeNode(packet **list, unsigned char seqnumber){
   if(list == NULL)
     return;
 
-  struct payload *previous = NULL;
-  struct payload *temp = *list;
+  packet *previous = NULL;
+  packet *temp = *list;
 
   while(temp != NULL && temp->seq_number != seqnumber){
     previous = temp;
@@ -180,7 +202,7 @@ void removeNode(struct payload **list, int seqnumber){
   }
 
   if(previous == NULL){
-    list = &temp->next;
+    *list = temp->next;
     free(temp->data);
     free(temp);
   }else if(temp != NULL){
@@ -188,31 +210,34 @@ void removeNode(struct payload **list, int seqnumber){
     free(temp->data);
     free(temp);
   }
-}
+}*/
 
-//method for displaying linkedlist
-void displayList(struct payload* pack){
+/*void displayList(){
+  packet* pack;
   while(pack != NULL){
-    pack = pack->next;
+    printf("heheheheh");
+    //pack = pack->next;
   }
-}
+}*/
 
 int main(int argc, char* argv[]){
   char ch;
-  int i,j,k;
+  int i,j;
   long b,c;
   int t = count_lines(argv[1]);
   read_file(argv[1]);
   read_directory();
+  int p =1;
 
-  linkedlist = malloc(sizeof(struct payload)*t);
+  //linkedlist = malloc(sizeof(struct payload)*t);
 
   for(i=0; i<t; i++){
     b = readPGM(buffer[i]);
+    create_payload(p,b,i);
     //calling function struct packet to create packet with payload
-    struct payload *pe = create_packet(data,b,i);
+    //struct payload *pe = create_packet(data,b,i);
     //addNodeToList(linkedlist,pe);
-    //displayList(pe);
+    //displayList();
     //struct header *header = create_header(data,b,c);
   }
 
