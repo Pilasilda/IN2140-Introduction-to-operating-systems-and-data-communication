@@ -16,25 +16,33 @@
 #include "pgmread.h"
 #include "protocol.c"
 
-struct packet{
+struct payload{
   char* filename;
   char* data;
   unsigned char seq_number;
-  unsigned char unused;
   unsigned char filelen;
 };
 
+struct header{
+  int length;
+  char*data;
+  unsigned char seq_number;
+  unsigned char ack;
+  unsigned char flag;
+  unsigned char unused;
+};
 
 int f;
 char* data;
+struct payload *pay;
 char* buffer[1000];
 char* buffer1[1000];
 unsigned long filelen;
-struct packet *head;
 
 void read_file(char*);
 int count_lines(char*);
 void read_directory();
 long readPGM(char*);
 int filesize(char*);
-struct packet* create_packet();
+struct payload* create_packet();
+struct header* create_header(char*,int);

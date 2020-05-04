@@ -1,8 +1,8 @@
 #include "header.h"
 
-int count_lines(char* file) {
-  FILE *fp = fopen(file, "r");
-  int lines = 0;
+int count_lines(char* file){
+  FILE* fp = fopen(file,"r");
+  int lines=0;
   char ch;
   do{
     ch = fgetc(fp);
@@ -10,7 +10,6 @@ int count_lines(char* file) {
       lines++;
     }
   }while(ch != EOF);
-
   rewind(fp);
   return lines;
 }
@@ -92,24 +91,46 @@ long readPGM(char* file){
 
   fclose(fp);
   return filelen;
+  free(data);
 }
 
 
-struct packet* create_packet(char *data,long byte, int b){
-  printf("hehehe\n");
-  //head->seq_number = b;
-  head->filename = buffer[b];
-  head->filelen = strlen(buffer[b]);
-  head->data = malloc(byte*b);
-  head->data = data;
-  printf("Fillengde:%c Filnavn:%s Data%s",head->filelen,head->filename,head->data);
+struct payload* create_packet(char *data,long byte, int b){
+  pay = malloc(sizeof(struct payload));
+  char * base = basename(buffer[b+'\0']);
+
+  pay->seq_number = b;
+  pay->filename = base;
+  pay->filelen = strlen(buffer[b+'\0']);
+  pay->data = malloc(byte*b);
+  pay->data = data;
+  //printf("Seqnummer:%d Fillengde:%d Filnavn:%s Data:%s \n",pay->seq_number,pay->filelen,pay->filename,pay->data);
+  return pay;
+  free(pay);
+  free(pay->data);
+}
+
+struct header* create_header(char*data,int i){
+  unsigned int payload;
+  unsigned int ack;
+  unsigned int termination;
+
+  struct header*head = malloc(sizeof(struct header));
+  int total;
+  total = (sizeof(struct payload)+sizeof(struct header));
+  head->length = total;
+  pay->seq_number = head->seq_number;
+
+  printf("%d%d",head->length,pay->seq_number);
   return head;
+  free(head);
 }
+
 
 
 int main(int argc, char* argv[]){
   char ch;
-  int i;
+  int i,j;
   long b;
   int t = count_lines(argv[1]);
   read_file(argv[1]);
@@ -118,8 +139,9 @@ int main(int argc, char* argv[]){
   for(i=0; i<t; i++){
     b = readPGM(buffer[i]);
     //calling function struct packet to create packet with payload
-    struct packet *pack = create_packet(data,b,i);
+    struct payload *pay = create_packet(data,b,i);
+    //struct header *header = create_header(data,i);
+    free(pay);
   }
-
   //free(data);
 }
