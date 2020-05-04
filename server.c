@@ -35,7 +35,8 @@ int main(void){
 }
 
 
-
+//sett innn all alle pakkene i lenkeliste, sende 7 pakker,
+//vente paa ack, fjern pakker fra liste
 
 
 void run_server(int udp_socket){

@@ -1,142 +1,5 @@
 #include "header.h"
-//Number of lines in textfile
-int count_lines(char* file,int ch){
-  FILE *fp = fopen(file, "r");
-  int lines;
-  do{
-    ch = fgetc(fp);
-    if(ch == '\n'){
-      lines++;
-    }
-  }while(ch != EOF);
-
-  rewind(fp);
-  return lines;
-}
-
-void read_file(char *file){
-  FILE *fp = fopen(file, "r");
-  int ch,lines,i;
-  size_t length = 0;
-
-  if(fp == NULL){
-    fprintf(stderr, "Empty file.\n");
-    exit(1);
-  }
-
-  lines = count_lines(file, ch);
-  char *contents[lines];
-
-  for(i = 0; i < lines; i++){
-    contents[i] = NULL;
-    getline(&contents[i],&length,fp);
-  }
-
-  /*for(i =0; i < lines; i++){
-    printf("%s\n",contents[i]);
-  }*/
-
-  fclose(fp);
-}
-
-//read content in directory
-int read_directory(){
-  DIR* directory = opendir("big_set");
-  char buffer[1000];
-  struct dirent *entry;
-  FILE* fp;
-  int lines,ch,i;
-
-  if(directory == NULL){
-    perror("Unable to read directory.");
-    return(1);
-  }
-
-    while((entry = readdir(directory)) != NULL){
-      lines++;
-      //skip current and parent directory
-      if(!strcmp(entry->d_name, ".")){
-        continue;
-      }
-      if(!strcmp(entry->d_name,"..")){
-        continue;
-      }
-
-      //printf("%s\n",entry->d_name);
-      if(entry->d_type != DT_REG){
-        continue;
-      }
-
-      sprintf(buffer,"%s",entry->d_name);
-      //printf("%s\n",buffer);
-    }
-  closedir(directory);
-  return(0);
-}
-
-void skipComments(FILE *fp)
-{
-    int ch;
-    char line[100];
-    while ((ch = fgetc(fp)) != EOF && isspace(ch)) {
-        ;
-    }
-
-    if (ch == '#') {
-        fgets(line, sizeof(line), fp);
-        skipComments(fp);
-    } else {
-        fseek(fp, -1, SEEK_CUR);
-    }
-}
-
-
-void read_image(char*file){
- FILE* fp = fopen(file,"rb");
-
- char type[255];
- int j,i,max_grey,word;
-
- if(file == NULL){
-   fprintf(stderr, "Empty file: %s\n",file);
-   exit(1);
- }
-
-  pgm = malloc(sizeof(struct Image));
-
-  printf("Reading PGM file: %s\n",file);
-  fscanf(fp,"%s", type);
-
- if(strcmp(type,"P2") == 0){
-  printf("Valid file type\n");
- }
-
-  skipComments(fp);
-  //get Weight,height
-  fscanf(fp,"%d",&pgm->width);
-  skipComments(fp);
-  fscanf(fp,"%d", &pgm->height);
-  skipComments(fp);
-  fscanf(fp, "%d", &max_grey);
-  skipComments(fp);
-
-  printf("WIDTH: %d, HEIGHT: %d\n", pgm->width, pgm->height);
-
-  pgm->data = malloc(sizeof(unsigned char*) *pgm->width *pgm->height);
-
-  for(i =0; i < pgm->height*pgm->width; i++){
-    fscanf(fp, "%s", &pgm->data[i]);
-    printf("%d\n",pgm->data[i]);
-  }
-
-  printf("Loaded PGM. Size: %dx%d, Greyscale: %d\n",pgm->width, pgm->height,max_grey+1);
-  fclose(fp);
-}
-
-
-
-
-int main(int argc, char* argv[]){
+int runudp(){
   //char *file;
   struct sockaddr_in serveraddr;
   int udp_socket, count,ch;
@@ -163,15 +26,197 @@ int main(int argc, char* argv[]){
   //printf("Message sent from server: %s\n", buffer);
 
   //Close socket descriptor
-  int t = count_lines(argv[1],ch);
-  read_file(argv[1]);
+  close(udp_socket);
+  return 0;
+}
 
-  int c = read_directory();
-  sprintf(buffer,"%d",c);
-  int i;
+//countlines
+int count_lines(char* file){
+  FILE* fp = fopen(file,"r");
+  int lines=0;
+  char ch;
+  do{
+    ch = fgetc(fp);
+    if(ch == '\n'){
+      lines++;
+    }
+  }while(ch != EOF);
+  rewind(fp);
+  return lines;
+}
+
+//reading txt file
+void read_file(char *file){
+  char str[count_lines(file)];
+  int teller = 0;
+  FILE* fp = fopen(file, "r");
+
+if(fp == NULL) {
+  perror("readFileNames: Error opening textfile");
+  exit(-1);
+}
+if (file != NULL) {
+  while(fscanf(fp, "%s", str) != EOF) {
+    buffer[teller] = malloc(sizeof(str) + 1);
+    strcpy(buffer[teller], str);
+
+    teller++;
+  }
+}
+
+fclose(fp);
+}
+
+//read content in directory
+void read_directory(){
+  DIR* directory = opendir("big_set/");
+  struct dirent *entry;
+  char* pgmFile;
+  int lines = 0;
+
+  if(directory == NULL){
+    perror("Unable to read directory.");
+    exit(1);
+  }
+
+    while((entry = readdir(directory)) != NULL){
+      //skip current and parent directory
+      if(!strcmp(entry->d_name, ".")){
+        continue;
+      }
+      if(!strcmp(entry->d_name,"..")){
+        continue;
+      }
+
+      pgmFile = entry->d_name;
+      buffer1[lines] = malloc(sizeof(pgmFile));
+      strcpy(buffer1[lines],pgmFile);
+      //printf("%s\n",buffer1[lines]);
+      lines++;
+    }
+  closedir(directory);
+}
+
+long readPGM(char* file){
+  FILE* fp = fopen(file,"r");
+  unsigned long filelen;
+  int f;
+
+  if(file == NULL ) {
+    fprintf(stderr, "Bad file%s\n", file);
+    exit(1);
+  }
+
+  if(fp == NULL){
+    perror("file point at null\n");
+
+    exit(1);
+  }
+
+  //get file length
+  fseek(fp,0,SEEK_END);
+  filelen = ftell(fp);
+  data = malloc(filelen+1);
+  fseek(fp,0,SEEK_SET);
+  f = fread(data,1,filelen,fp);
+
+  fclose(fp);
+  return filelen;
+  free(data);
+}
+
+struct payload* create_packet(char *data,long byte, int b){
+  pay = malloc(sizeof(struct payload));
+  char * base = basename(buffer[b+'\0']);
+
+  pay->seq_number = b;
+  pay->filename = base;
+  pay->filelen = strlen(buffer[b]);
+  pay->data = malloc(byte*b);
+  pay->data = data;
+  //printf("Seqnummer:%d Fillengde:%d Filnavn:%s Data:%s \n",pay->seq_number,pay->filelen,pay->filename,pay->data);
+  return pay;
+  free(pay);
+  free(pay->data);
+}
+
+struct header* create_header(char*data,int i,long c){
+  unsigned int payload;
+  unsigned int ack;
+  unsigned int termination;
+  int total;
+  int sizeofdata = sizeof(data);
+
+  struct header*head = malloc(sizeof(struct header));
+  total = ((sizeof(struct payload))+(sizeof(struct header)+c));
+  head->length = total;
+
+  //printf("%d\n",head->length);
+  return head;
+  free(head);
+}
+
+void addNodeToList(packet **list, packet*new){
+  if(list == NULL){
+    new->next = NULL;
+    list = &new;
+  }else{
+    new->next = *list;
+    *list = new;
+  }
+}
+
+void removeNode(packet **list, unsigned char seqnumber){
+  if(list == NULL)
+    return;
+
+  packet *previous = NULL;
+  packet *temp = *list;
+
+  while(temp != NULL && temp->seq_number != seqnumber){
+    previous = temp;
+    temp = temp->next;
+  }
+
+  if(previous == NULL){
+    *list = temp->next;
+    free(temp->data);
+    free(temp);
+  }else if(temp != NULL){
+    previous->next = temp->next;
+    free(temp->data);
+    free(temp);
+  }
+}
+
+void displayList(){
+  packet* pack;
+  while(pack != NULL){
+    printf("%s\n", pack->data);
+    pack = pack->next;
+  }
+}
+
+int main(int argc, char* argv[]){
+  char ch;
+  int i,j;
+  long b,c;
+  int t = count_lines(argv[1]);
+  read_file(argv[1]);
+  read_directory();
+
+  linkedlist = malloc(sizeof(struct payload)*t);
 
   for(i=0; i<t; i++){
-    read_image(&buffer[i]);
+    b = readPGM(buffer[i]);
+    //calling function struct packet to create packet with payload
+    struct payload *pe = create_packet(data,b,i);
+    addNodeToList(linkedlist,pe);
+    displayList();
+    //struct header *header = create_header(data,b,c);
+    free(pe);
   }
-  close(udp_socket);
+
+  //displayList();
+  //free(data);
 }

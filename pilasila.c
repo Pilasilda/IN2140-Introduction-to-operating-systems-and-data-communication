@@ -110,18 +110,18 @@ struct payload* create_packet(char *data,long byte, int b){
   free(pay->data);
 }
 
-struct header* create_header(char*data,int i){
+struct header* create_header(char*data,int i,long c){
   unsigned int payload;
   unsigned int ack;
   unsigned int termination;
+  int total;
+  int sizeofdata = sizeof(data);
 
   struct header*head = malloc(sizeof(struct header));
-  int total;
-  total = (sizeof(struct payload)+sizeof(struct header));
+  total = ((sizeof(struct payload))+(sizeof(struct header)+c));
   head->length = total;
-  pay->seq_number = head->seq_number;
 
-  printf("%d%d",head->length,pay->seq_number);
+  //printf("%d\n",head->length);
   return head;
   free(head);
 }
@@ -131,7 +131,7 @@ struct header* create_header(char*data,int i){
 int main(int argc, char* argv[]){
   char ch;
   int i,j;
-  long b;
+  long b,c;
   int t = count_lines(argv[1]);
   read_file(argv[1]);
   read_directory();
@@ -140,7 +140,7 @@ int main(int argc, char* argv[]){
     b = readPGM(buffer[i]);
     //calling function struct packet to create packet with payload
     struct payload *pay = create_packet(data,b,i);
-    //struct header *header = create_header(data,i);
+    struct header *header = create_header(data,b,c);
     free(pay);
   }
   //free(data);

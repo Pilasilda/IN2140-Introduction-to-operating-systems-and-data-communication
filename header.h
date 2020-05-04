@@ -14,14 +14,17 @@
 
 #include "pgmread.c"
 #include "pgmread.h"
-#include "protocol.c"
 
-struct payload{
+#define TIMEOUT 5
+#define MAX 1024
+
+typedef struct payload{
   char* filename;
   char* data;
   unsigned char seq_number;
   unsigned char filelen;
-};
+  struct payload *next;
+}packet;
 
 struct header{
   int length;
@@ -38,11 +41,18 @@ struct payload *pay;
 char* buffer[1000];
 char* buffer1[1000];
 unsigned long filelen;
+int windowlength;
+
+struct payload** linkedlist;
 
 void read_file(char*);
 int count_lines(char*);
 void read_directory();
 long readPGM(char*);
 int filesize(char*);
-struct payload* create_packet();
-struct header* create_header(char*,int);
+void addNodeToList(packet**, packet*);
+void removeNode(packet **, unsigned char);
+void displayList();
+int runudp();
+struct payload* create_packet(char *,long, int);
+struct header* create_header(char*,int,long);
