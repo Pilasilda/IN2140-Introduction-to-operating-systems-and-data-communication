@@ -18,8 +18,8 @@ void set_loss_probability( float x )
     loss_probability = x;
 }
 
-ssize_t send_packet( int sock, const char* buffer, size_t size, int flags, const struct sockaddr* addr, socklen_t addrlen )
-{
+ssize_t send_packet( int sock, const char* buffer, size_t size,
+  int flags, const struct sockaddr* addr, socklen_t addrlen ){
     float rnd = drand48();
 
     if( !(buffer[6] & 0x4) && /* Ignore termination packets. */

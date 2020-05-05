@@ -43,7 +43,7 @@ void run_server(int udp_socket){
   struct sockaddr_in serveraddr;
   socklen_t count = sizeof(serveraddr);
   char buffer[1000];
-  char *msg = "Hello client";
+  char *msg = "Got you packet";
 
   count = sizeof(serveraddr);
   recvfrom(udp_socket, buffer, sizeof(buffer),0, (struct sockaddr*)&serveraddr,&count);

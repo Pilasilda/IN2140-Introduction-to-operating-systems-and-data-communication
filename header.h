@@ -15,6 +15,7 @@
 
 #include "pgmread.c"
 #include "pgmread.h"
+#include "send_packet.c"
 
 #define TIMEOUT 5
 #define MAX 1024
@@ -24,39 +25,37 @@ struct payload{
   char* data;
   int uniqnumber;
   unsigned char filelen;
-  struct payload *next;
 };struct payload *pay;
 
-struct header{
-  int length;
-  unsigned char* seq_num;
-  unsigned char ack;
-  unsigned char flag;
-  unsigned char unused;
-  int payload;
-};struct header* head;
+struct packets{
+  unsigned char seqnumber;
+  char* packet;
+  struct packets *next;
+};
 
 int f;
+int* totalBytes;
 char* data;
+char* header;
 char *packet;
 char* buffer[1000];
 char* buffer1[1000];
 unsigned long filelen;
 
-struct payload** linkedlist;
+struct packets** linkedlist;
+struct packets *point;
 struct in_addr address;
 
-void read_file(char*);
-int count_lines(char*);
-void read_directory();
-long readPGM(char*);
-int filesize(char*);
-void addNodeToList(struct payload**, struct payload*);
-void removeNode(struct payload **, int);
-void displayList();
 int runudp();
-struct payload* create_payload(char *,long, int,int);
-struct header* create_header(char*,int,long);
+void displayList();
+int filesize(char*);
+char* readPGM(char*);
+void read_file(char*);
+void read_directory();
+int count_lines(char*);
 void display(struct payload*);
-//char* create_payload(int, char*, long,int);
-//char* create_header(int, unsigned char, unsigned char, unsigned char);
+void removeNode(struct packets **, int);
+struct payload* create_payload(char*,int,int);
+void addNodeToList(struct packets**, struct packets*);
+struct packets* build_struct_packet(char*, struct payload*);
+char* create_header(struct payload*, unsigned char,unsigned char,int);

@@ -161,29 +161,27 @@ char* create_header(int length, unsigned char seq_num, unsigned char seq_num_las
 }
 
 //payload
-char* create_payload(int uid, char* data, long byte,int b){
+char* create_payload(int b, char* data){
+  char *header = malloc(sizeof(int) * 2 + sizeof(char) + sizeof(int));
+  char* seq = malloc(sizeof(int));
   char* base = basename(buffer[b]);
-  char *payload = malloc(sizeof(int) * 2 + sizeof(char) + sizeof(int));
   char* bytesofimages;
   char* filename;
-  int i;
-  i=uid;
 
   int length = strlen(buffer[b]);
-  bytesofimages = malloc(byte*b);
-  bytesofimages = data;
-  //printf("%d\n",i);
-  //memcpy(packet,(char*)&i, sizeof(int));
-  //printf("%s\n",header);
-  //memcpy(packet + sizeof(int) * 2,(char*)&length, sizeof(int));
-  //printf("%s\n",header);
-  memcpy(packet,base,sizeof(char));
-  puts(packet);
-  //printf("%s\n", packet);
+  //bytesofimages = malloc(byte*b);
+  //bytesofimages = data;
+  //memcpy(header,&b, sizeof(int));
+  // /printf("%s\n",header);
+  //memcpy(payload,&b,sizeof(int));
+  //memcpy(payload + sizeof(int) * 2,(char*)&length, sizeof(int));
+  //printf("%s\n",payload);
+  //printf("%s", header);
 
   //memcpy(packet + sizeof(int) * 2 + sizeof(char), &base, 1);//usikker siden det er navn av fil
   //memcpy(header + sizeof(int) *2 + sizeof(char) + sizeof(int), &bytesofimages, sizeof(int));
-  return packet;
+  free(header);
+  return header;
 }
 
 /*void addNodeToList(packet **list, packet*new){
@@ -239,7 +237,7 @@ int main(int argc, char* argv[]){
   //linkedlist = malloc(sizeof(struct payload)*t);
   for(i=0; i<t; i++){
     b = readPGM(buffer[i]);
-    create_payload(p,data,b,i);
+    char* test = create_payload(b,data);
     //calling function struct packet to create packet with payload
     //struct payload *pe = create_packet(data,b,i);
     //addNodeToList(linkedlist,pe);

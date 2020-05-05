@@ -1,10 +1,10 @@
-#include "header.h"
+ #include "header.h"
 
 //method for validating commandline arguments
 void validate(int argc,char*argv[]){
   int test;
 
-  if(argc < 3){
+  if(argc < 4){
     printf("Usage: %s IP port\n",argv[0]);
     exit(EXIT_FAILURE);
   }
@@ -96,7 +96,7 @@ void read_directory(){
   closedir(directory);
 }
 
-long readPGM(char* file){
+char* readPGM(char* file){
   FILE* fp = fopen(file,"r");
   unsigned long filelen;
   int f;
@@ -115,24 +115,31 @@ long readPGM(char* file){
   //get file length
   fseek(fp,0,SEEK_END);
   filelen = ftell(fp);
-  data = malloc(filelen+1);
   fseek(fp,0,SEEK_SET);
+  //alloc for global char*data to store image information
+  data = malloc(filelen);
+
+  if(data == NULL){
+    exit(EXIT_FAILURE);
+  }
+  //reading pgm file as a chunk of bytes, storing it to char*data
   f = fread(data,1,filelen,fp);
+  totalBytes = malloc(sizeof(int));
+  totalBytes = &f;
 
   fclose(fp);
-  return filelen;
-  free(data);
+  return data;
 }
 
-struct payload* create_payload(char *data,long byte, int b,int uniq_number){
+//method for creating payload
+struct payload* create_payload(char *data,int b,int uniq_number){
   pay = malloc(sizeof(struct payload));
   char * base = basename(buffer[b]);
-  //buffer[0] = '\0';
 
   pay->uniqnumber = uniq_number;
   pay->filename = base;
   pay->filelen = strlen(buffer[b]);
-  pay->data = malloc(byte*b);
+  pay->data = malloc(b*uniq_number);
   pay->data = data;
   //printf("Seqnummer:%d Fillengde:%d Filnavn:%s Data:%s \n",pay->uniqnumber,pay->filelen,pay->filename,pay->data);
   return pay;
@@ -140,35 +147,56 @@ struct payload* create_payload(char *data,long byte, int b,int uniq_number){
   free(pay->data);
 }
 
-void convertStructtoBuff(){
-
-}
-
-struct header* create_header(char*data,int i,long c){
-  unsigned int payload;
-  unsigned int ack;
-  unsigned int termination;
-  int total;
-  int sizeofdata = sizeof(data);
+//method for creating header
+char* create_header(struct payload *pay, unsigned char last_number,unsigned char flag,int bytes){
+  //allocating space for all variables
+  header = malloc(sizeof(int) + sizeof(char)*5);
   unsigned char unused = 0x7f;
-  head = malloc(sizeof(struct header));
-  int size = sizeof(data);
-  int sizeHeader = sizeof(struct header);
-  int sizePayload = sizeof(struct payload);
-  char* b;
-  b = buffer[i];
+  int length = (sizeof(pay) + sizeof(struct packets));
+  int test = length+'0';
 
-  head->length = (sizeHeader+sizePayload+size);
-  head->seq_num = b;
+  memcpy(header, &test, sizeof(int));
+  memcpy(header + sizeof(int), &pay->uniqnumber,1);
+  memcpy(header + sizeof(int) + sizeof(char), &last_number,1);
+  memcpy(header + sizeof(int) + sizeof(char) + sizeof(char), &flag ,1);
+  memcpy(header + sizeof(int) + sizeof(char) + sizeof(char) + sizeof(char), &unused, 1);
+  memcpy(header + sizeof(int) + sizeof(char) + sizeof(char) + sizeof(char), pay, 1);
 
-  printf("%s\n", head->seq_num);
-  //return head;
-  //free(head);
-  return head;
+  printf("%s\n", header);
+  return header;
 }
+
+struct packets* build_struct_packet(char* tmp, struct payload* uid){
+  //alloc for struct pointer
+  point = malloc(sizeof(struct packets));
+  point->seqnumber = uid->uniqnumber;
+  point->packet = tmp;
+
+  return point;
+}
+
+//method for creating a packet combining header+payload
+char* build_packet(char* tmp, struct payload* pay, int totalBytes){
+  packet = malloc(sizeof(tmp) + sizeof(struct payload));
+
+  memcpy(packet + sizeof(tmp), tmp, 1);
+  memcpy(packet + sizeof(tmp) + sizeof(pay), pay, 1);
+
+  return packet;
+}
+
+//changing a packet to buffer
+/*void packet_to_buffer(struct packet* pck){
+  packet = malloc(sizeof(data));
+
+  memcpy(packet,&point->seqnumber, sizeof(char));
+  memcpy(packet, &point->packet);
+}*/
+
+
 
 //adding node to linkedlist
-void addNodeToList(struct payload **list, struct payload *newlist){
+void addNodeToList(struct packets **list, struct packets *newlist){
   if(list == NULL){
     newlist->next = NULL;
     list = &newlist;
@@ -179,31 +207,31 @@ void addNodeToList(struct payload **list, struct payload *newlist){
   //printf("%s\n",newlist->data);
 }
 
-void removeNode(struct payload **list, int seqnumber){
+void removeNode(struct packets **list, int snumber){
   if(list == NULL)
     return;
 
-  struct payload *previous = NULL;
-  struct payload *temp = *list;
+  struct packets *previous = NULL;
+  struct packets *temp = *list;
 
-  while(temp != NULL && temp->uniqnumber != seqnumber){
+  while(temp != NULL && temp->seqnumber != snumber){
     previous = temp;
     temp = temp->next;
   }
 
   if(previous == NULL){
     list = &temp->next;
-    free(temp->data);
+    free(temp->packet);
     free(temp);
   }else if(temp != NULL){
     previous->next = temp->next;
-    free(temp->data);
+    free(temp->packet);
     free(temp);
   }
 }
 
 //method for displaying linkedlist
-void displayList(struct payload* pack){
+void displayList(struct packets* pack){
   while(pack != NULL){
     pack = pack->next;
   }
@@ -218,35 +246,44 @@ int main(int argc, char* argv[]){
   read_directory();
   int uniq = 1;
   //validate(argc,argv);
-  struct sockaddr_in clientaddr;
+  /*struct sockaddr_in clientaddr;
   socklen_t size = sizeof(clientaddr);
 
-  //clientaddr.sin_family = AF_INET;
-  //clientaddr.sin_port = htons(atoi(argv[2]));
-  //clientaddr.sin_addr = address;
+  clientaddr.sin_family = AF_INET;
+  clientaddr.sin_port = htons(atoi(argv[2]));
+  clientaddr.sin_addr = address;
 
   //create udp socket
-  //udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
+  udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
-  //connect socket
-  /*if(connect(udp_socket, (struct sockaddr*)&clientaddr,sizeof(clientaddr)) < 0){
+  connect socket
+  if(connect(udp_socket, (struct sockaddr*)&clientaddr,sizeof(clientaddr)) < 0){
     perror("Error while creatng socket");
     exit(EXIT_FAILURE);
-  }*/
+  }
 
+  sendto(udp_socket,data, sizeof(data),0,(struct sockaddr*)NULL,sizeof(serveraddr));
   //send_packet(udp_socket, packet, sizeof(buffer), int flags, clientaddr, size);
-  //recvfrom(udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL,NULL);
+  recvfrom(udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL,NULL);*/
 
   linkedlist = malloc(sizeof(struct payload)*t);
 
   for(i=0; i<t; i++){
-    b = readPGM(buffer[i]);
+    char* image = readPGM(buffer[i]);
     //calling function struct packet to create packet with payload
-    struct payload *pe = create_payload(data,b,i,uniq);
-    struct header *he = create_header(data,b,i);
-    //addNodeToList(linkedlist,pe);
+    struct payload *pe = create_payload(image,i,*totalBytes);
+    char * test = create_header(pe,1,0,*totalBytes);
+    char * test1 = build_packet(test,pe,*totalBytes);
+    struct packets* pack = build_struct_packet(test1,pe);
+
+    addNodeToList(linkedlist,pack);
     //displayList(pe);
-    //struct header *header = create_header(data,b,c);
+    //free(pack);
+    //free(test1);
+    //free(test);
+    //removeNode(linkedlist,pe->uniqnumber);
+    //free(totalBytes);
+    //free(data);
   }
 
   //Close socket descriptors
