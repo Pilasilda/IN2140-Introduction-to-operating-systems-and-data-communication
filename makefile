@@ -1,19 +1,17 @@
 CC = gcc
-C= -g -D_GNU_SOURCE
-BINARIES = client server
+CFLAGS = -Wall -Wconversion -Wextra -g
+BINARIES = server client
 
+# Hva er PHONY? Jo: targets som ikke er filer
 .PHONY: all clean
 
 all: $(BINARIES)
 
-client: client.c pgmread.c
-$(CC) $(CFLAGS) $^ -o $@
-
 server: server.c
-$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@
 
-run: all
+client: client.c 
+	$(CC) $(CFLAGS) $^ -o $@
 
 clean:
-	rm -rf client
-	rm -rf node
+	rm -rf $(BINARIES)

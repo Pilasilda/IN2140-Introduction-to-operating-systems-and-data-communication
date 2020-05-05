@@ -1,36 +1,35 @@
 #include "header.h"
-int runudp(){
-  //char *file;
-  struct sockaddr_in serveraddr;
-  int udp_socket, count,ch;
-  char buffer[1000];
-  char *msg = "Hello server";
 
-  bzero(&serveraddr, sizeof(serveraddr));
-  serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-  serveraddr.sin_port = htons(5000);
-  serveraddr.sin_family = AF_INET;
+//method for validating commandline arguments
+void validate(int argc,char*argv[]){
+  int test;
 
-  //create udp socket
-  udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
-
-  //connect socket
-  if(connect(udp_socket, (struct sockaddr*)&serveraddr,sizeof(serveraddr)) < 0){
-    perror("Error while creatng socket");
+  if(argc < 3){
+    printf("Usage: %s IP port\n",argv[0]);
     exit(EXIT_FAILURE);
   }
+  test = inet_pton(AF_INET,argv[1],&address);
+  if(test == 0){
+    printf("%s is an invalid IPv4 address.\n",argv[1]);
+    exit(EXIT_FAILURE);
+  }
+  size_t i;
+  for(i =0; i< strlen(argv[2]); i++){
+    if(!isdigit(argv[2][i])){
+      printf("Invalid port number %s\n",argv[2]);
+      exit(EXIT_FAILURE);
+    }
+  }
 
-  sendto(udp_socket, msg, MAX,0, (struct sockaddr*) NULL, sizeof(serveraddr));
-  recvfrom(udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL,NULL);
-  //puts(buffer);
-  //printf("Message sent from server: %s\n", buffer);
+  test = atoi(argv[2]);
 
-  //Close socket descriptor
-  close(udp_socket);
-  return 0;
+  if(test < 1024 || test > 0xffff){
+    printf("Port must be between an interval of 1024-65535.\n");
+    exit(EXIT_FAILURE);
+  }
 }
 
-//countlines
+//count line in file used in main
 int count_lines(char* file){
   FILE* fp = fopen(file,"r");
   int lines=0;
@@ -125,19 +124,24 @@ long readPGM(char* file){
   free(data);
 }
 
-struct payload* create_packet(char *data,long byte, int b){
+struct payload* create_payload(char *data,long byte, int b,int uniq_number){
   pay = malloc(sizeof(struct payload));
-  char * base = basename(buffer[b+'\0']);
+  char * base = basename(buffer[b]);
+  //buffer[0] = '\0';
 
-  pay->seq_number = b;
+  pay->uniqnumber = uniq_number;
   pay->filename = base;
   pay->filelen = strlen(buffer[b]);
   pay->data = malloc(byte*b);
   pay->data = data;
-  //printf("Seqnummer:%d Fillengde:%d Filnavn:%s Data:%s \n",pay->seq_number,pay->filelen,pay->filename,pay->data);
+  //printf("Seqnummer:%d Fillengde:%d Filnavn:%s Data:%s \n",pay->uniqnumber,pay->filelen,pay->filename,pay->data);
   return pay;
   free(pay);
   free(pay->data);
+}
+
+void convertStructtoBuff(){
+
 }
 
 struct header* create_header(char*data,int i,long c){
@@ -147,15 +151,23 @@ struct header* create_header(char*data,int i,long c){
   int total;
   int sizeofdata = sizeof(data);
   unsigned char unused = 0x7f;
+  head = malloc(sizeof(struct header));
+  int size = sizeof(data);
+  int sizeHeader = sizeof(struct header);
+  int sizePayload = sizeof(struct payload);
+  char* b;
+  b = buffer[i];
 
-  struct header*head = malloc(sizeof(int) + sizeof(char)*4);
-  int length = (sizeof(struct packet*)+(struct payload*)+sizeofdata);
+  head->length = (sizeHeader+sizePayload+size);
+  head->seq_num = b;
 
-  //printf("%d\n",head->length);
+  printf("%s\n", head->seq_num);
+  //return head;
+  //free(head);
   return head;
-  free(head);
 }
 
+//adding node to linkedlist
 void addNodeToList(struct payload **list, struct payload *newlist){
   if(list == NULL){
     newlist->next = NULL;
@@ -174,7 +186,7 @@ void removeNode(struct payload **list, int seqnumber){
   struct payload *previous = NULL;
   struct payload *temp = *list;
 
-  while(temp != NULL && temp->seq_number != seqnumber){
+  while(temp != NULL && temp->uniqnumber != seqnumber){
     previous = temp;
     temp = temp->next;
   }
@@ -199,23 +211,47 @@ void displayList(struct payload* pack){
 
 int main(int argc, char* argv[]){
   char ch;
-  int i,j,k;
+  int i,j,k,udp_socket;
   long b,c;
   int t = count_lines(argv[1]);
   read_file(argv[1]);
   read_directory();
+  int uniq = 1;
+  //validate(argc,argv);
+  struct sockaddr_in clientaddr;
+  socklen_t size = sizeof(clientaddr);
+
+  //clientaddr.sin_family = AF_INET;
+  //clientaddr.sin_port = htons(atoi(argv[2]));
+  //clientaddr.sin_addr = address;
+
+  //create udp socket
+  //udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
+
+  //connect socket
+  /*if(connect(udp_socket, (struct sockaddr*)&clientaddr,sizeof(clientaddr)) < 0){
+    perror("Error while creatng socket");
+    exit(EXIT_FAILURE);
+  }*/
+
+  //send_packet(udp_socket, packet, sizeof(buffer), int flags, clientaddr, size);
+  //recvfrom(udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL,NULL);
 
   linkedlist = malloc(sizeof(struct payload)*t);
 
   for(i=0; i<t; i++){
     b = readPGM(buffer[i]);
     //calling function struct packet to create packet with payload
-    struct payload *pe = create_packet(data,b,i);
+    struct payload *pe = create_payload(data,b,i,uniq);
+    struct header *he = create_header(data,b,i);
     //addNodeToList(linkedlist,pe);
     //displayList(pe);
     //struct header *header = create_header(data,b,c);
   }
 
+  //Close socket descriptors
+  close(udp_socket);
+  return 0;
   //displayList();
   //free(data);
 }
