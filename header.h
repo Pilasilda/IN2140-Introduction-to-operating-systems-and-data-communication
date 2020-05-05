@@ -48,6 +48,7 @@ struct in_addr address;
 
 int runudp();
 void displayList();
+void validateargs();
 int filesize(char*);
 char* readPGM(char*);
 void read_file(char*);

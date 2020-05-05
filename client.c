@@ -150,19 +150,21 @@ struct payload* create_payload(char *data,int b,int uniq_number){
 //method for creating header
 char* create_header(struct payload *pay, unsigned char last_number,unsigned char flag,int bytes){
   //allocating space for all variables
-  header = malloc(sizeof(int) + sizeof(char)*5);
+  header = malloc(sizeof(int) + sizeof(char)*4);
   unsigned char unused = 0x7f;
-  int length = (sizeof(pay) + sizeof(struct packets));
+  int c = sizeof(data);
+  int length = (sizeof(pay) + sizeof(struct packets)+c);
+  printf("%d\n",length);
   int test = length+'0';
 
   memcpy(header, &test, sizeof(int));
   memcpy(header + sizeof(int), &pay->uniqnumber,1);
   memcpy(header + sizeof(int) + sizeof(char), &last_number,1);
   memcpy(header + sizeof(int) + sizeof(char) + sizeof(char), &flag ,1);
-  memcpy(header + sizeof(int) + sizeof(char) + sizeof(char) + sizeof(char), &unused, 1);
+  //memcpy(header + sizeof(int) + sizeof(char) + sizeof(char) + sizeof(char), &unused, 1);
   memcpy(header + sizeof(int) + sizeof(char) + sizeof(char) + sizeof(char), pay, 1);
 
-  printf("%s\n", header);
+  //printf("%s\n", header);
   return header;
 }
 
@@ -172,6 +174,7 @@ struct packets* build_struct_packet(char* tmp, struct payload* uid){
   point->seqnumber = uid->uniqnumber;
   point->packet = tmp;
 
+  //printf("%s\n", tmp);
   return point;
 }
 
@@ -273,10 +276,10 @@ int main(int argc, char* argv[]){
     //calling function struct packet to create packet with payload
     struct payload *pe = create_payload(image,i,*totalBytes);
     char * test = create_header(pe,1,0,*totalBytes);
-    char * test1 = build_packet(test,pe,*totalBytes);
-    struct packets* pack = build_struct_packet(test1,pe);
+    //char * test1 = build_packet(test,pe,*totalBytes);
+    //struct packets* pack = build_struct_packet(test1,pe);
 
-    addNodeToList(linkedlist,pack);
+    //addNodeToList(linkedlist,pack);
     //displayList(pe);
     //free(pack);
     //free(test1);
