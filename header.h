@@ -54,6 +54,7 @@ struct payload *pay;
 
 int runudp();
 void displayList();
+void bufferFree(int t, char*[]);
 void validateargs();
 char* readPGM(char*);
 void read_file(char*);
