@@ -1,5 +1,4 @@
  #include "header.h"
-
 //method for validating commandline arguments
 void validate(int argc,char*argv[]){
   int test;
@@ -22,7 +21,6 @@ void validate(int argc,char*argv[]){
   }
 
   test = atoi(argv[2]);
-
   if(test < 1024 || test > 0xffff){
     printf("Port must be between an interval of 1024-65535.\n");
     exit(EXIT_FAILURE);
@@ -56,13 +54,13 @@ if(fp == NULL) {
 }
 if (file != NULL) {
   while(fscanf(fp, "%s", str) != EOF) {
+    //reading it into buffer,allocating buffer
     buffer[teller] = malloc(sizeof(str) + 1);
     strcpy(buffer[teller], str);
 
     teller++;
   }
 }
-
 fclose(fp);
 }
 
@@ -72,6 +70,7 @@ void read_directory(){
   struct dirent *entry;
   char* pgmFile;
   int lines = 0;
+  char filename[255];
 
   if(directory == NULL){
     perror("Unable to read directory.");
@@ -87,9 +86,14 @@ void read_directory(){
         continue;
       }
 
+      char * file = buffer[lines];
+      char * directoryName = dirname(file);
+
+      strcpy(filename,directoryName);
       pgmFile = entry->d_name;
-      buffer1[lines] = malloc(sizeof(pgmFile));
-      strcpy(buffer1[lines],pgmFile);
+      strncat(filename,entry->d_name,20);
+      buffer1[lines] = malloc(strlen(filename)+1);
+      strcpy(buffer1[lines],filename);
       //printf("%s\n",buffer1[lines]);
       lines++;
     }
@@ -124,6 +128,7 @@ char* readPGM(char* file){
   }
   //reading pgm file as a chunk of bytes, storing it to char*data
   f = fread(data,1,filelen,fp);
+  //store totalbyte of each file in int* which is global for later use
   totalBytes = malloc(sizeof(int));
   totalBytes = &f;
 
@@ -132,14 +137,14 @@ char* readPGM(char* file){
 }
 
 //method for creating payload
-struct payload* create_payload(char *data,int b,int uniq_number){
+struct payload* create_payload(char *data,int b,int bytes){
   pay = malloc(sizeof(struct payload));
-  char * base = basename(buffer[b]);
+  char * base = basename(buffer[b+'\0']);
 
-  pay->uniqnumber = uniq_number;
+  pay->uniqnumber = b;
   pay->filename = base;
-  pay->filelen = strlen(buffer[b]);
-  pay->data = malloc(b*uniq_number);
+  pay->filelen = strlen(buffer[b]+1);
+  pay->data = malloc(b*bytes);
   pay->data = data;
   //printf("Seqnummer:%d Fillengde:%d Filnavn:%s Data:%s \n",pay->uniqnumber,pay->filelen,pay->filename,pay->data);
   return pay;
@@ -148,24 +153,24 @@ struct payload* create_payload(char *data,int b,int uniq_number){
 }
 
 //method for creating header
-char* create_header(struct payload *pay, unsigned char last_number,unsigned char flag,int bytes){
+char* create_header(struct payload *payload,unsigned char last_number,unsigned char flag ,int totalBytes){
   //allocating space for all variables
-  header = malloc(sizeof(int) + sizeof(char)*4);
+  header = malloc(sizeof(int) + sizeof(char)*4 + totalBytes);
   unsigned char unused = 0x7f;
-  int c = sizeof(data);
-  int length = (sizeof(pay) + sizeof(struct packets)+c);
-  printf("%d\n",length);
-  int test = length+'0';
+  totalBytes = strlen(pay->data);
+  int length = (sizeof(struct packets)+ sizeof(payload) + totalBytes);
+  int test = length +'0';
+  int uniq = pay->uniqnumber;
 
   memcpy(header, &test, sizeof(int));
-  memcpy(header + sizeof(int), &pay->uniqnumber,1);
+  memcpy(header + sizeof(int), &uniq, 1);
   memcpy(header + sizeof(int) + sizeof(char), &last_number,1);
   memcpy(header + sizeof(int) + sizeof(char) + sizeof(char), &flag ,1);
-  //memcpy(header + sizeof(int) + sizeof(char) + sizeof(char) + sizeof(char), &unused, 1);
-  memcpy(header + sizeof(int) + sizeof(char) + sizeof(char) + sizeof(char), pay, 1);
+  memcpy(header + sizeof(int) + sizeof(char) + sizeof(char) + sizeof(char), &unused, 1);
+  memcpy(header + sizeof(int) + sizeof(char) + sizeof(char) + sizeof(char) + sizeof(char), pay, 1);
 
-  //printf("%s\n", header);
   return header;
+  free(header);
 }
 
 struct packets* build_struct_packet(char* tmp, struct payload* uid){
@@ -180,22 +185,14 @@ struct packets* build_struct_packet(char* tmp, struct payload* uid){
 
 //method for creating a packet combining header+payload
 char* build_packet(char* tmp, struct payload* pay, int totalBytes){
-  packet = malloc(sizeof(tmp) + sizeof(struct payload));
+  packet = malloc(sizeof(tmp) + sizeof(struct payload)+totalBytes);
 
   memcpy(packet + sizeof(tmp), tmp, 1);
   memcpy(packet + sizeof(tmp) + sizeof(pay), pay, 1);
 
+  //printf("%x\n", *(uint32_t *)packet);
   return packet;
 }
-
-//changing a packet to buffer
-/*void packet_to_buffer(struct packet* pck){
-  packet = malloc(sizeof(data));
-
-  memcpy(packet,&point->seqnumber, sizeof(char));
-  memcpy(packet, &point->packet);
-}*/
-
 
 
 //adding node to linkedlist
@@ -240,45 +237,84 @@ void displayList(struct packets* pack){
   }
 }
 
+
 int main(int argc, char* argv[]){
+  validate(argc,argv);
   char ch;
   int i,j,k,udp_socket;
+  int s;
   long b,c;
-  int t = count_lines(argv[1]);
-  read_file(argv[1]);
-  read_directory();
-  int uniq = 1;
-  //validate(argc,argv);
-  /*struct sockaddr_in clientaddr;
-  socklen_t size = sizeof(clientaddr);
+  struct sockaddr_in clientaddr;
+  struct in_addr address;
+  char*buff[255];
+  int frame_id;
+  Frame sender;
+  Frame reciever;
+  int ack = 1;
 
+  //create udp socket file descriptor
+  if((udp_socket = socket(AF_INET,SOCK_DGRAM,0))<0){
+    perror("Socket creation failed\n");
+  }
+
+  memset(&clientaddr,0,sizeof(clientaddr));
+  //connection information
   clientaddr.sin_family = AF_INET;
   clientaddr.sin_port = htons(atoi(argv[2]));
   clientaddr.sin_addr = address;
 
-  //create udp socket
-  udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
-
-  connect socket
-  if(connect(udp_socket, (struct sockaddr*)&clientaddr,sizeof(clientaddr)) < 0){
-    perror("Error while creatng socket");
-    exit(EXIT_FAILURE);
-  }
-
-  sendto(udp_socket,data, sizeof(data),0,(struct sockaddr*)NULL,sizeof(serveraddr));
-  //send_packet(udp_socket, packet, sizeof(buffer), int flags, clientaddr, size);
-  recvfrom(udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL,NULL);*/
-
+  //printf("Connected!\n");
+  int t = count_lines(argv[3]);
+  read_file(argv[3]);
+  read_directory();
+  int uniq = 1;
   linkedlist = malloc(sizeof(struct payload)*t);
 
+  //how i would have done it
+  /*if(recv_ack ==1){
+    packets->seqnr = frame_id;
+    packets->ack = 0;
+    packets->flagg = '0x1';
+    create_header(payload,0,flag);
+    send_packet(socketfd,&packet->pack,strlen(&packet->pack),0 (struct sockaddr*)&clientaddr, sizeof(clientaddr));
+    printf("Packet have been sent\n");
+ }
+    int addr = sizeof(clientaddr);
+    int n = recvfrom(udp_socket,buff, sizeof(data), 0, (struct sockaddr*)NULL,NULL);
+    if(n > 0 && reciever.seqnumber ==0 && reciever.ack == frame_id+1){
+      printf("ACK recieved\n");
+      ack = 0;
+    }
+    frame_id++;
+  */
   for(i=0; i<t; i++){
     char* image = readPGM(buffer[i]);
     //calling function struct packet to create packet with payload
     struct payload *pe = create_payload(image,i,*totalBytes);
-    char * test = create_header(pe,1,0,*totalBytes);
-    //char * test1 = build_packet(test,pe,*totalBytes);
-    //struct packets* pack = build_struct_packet(test1,pe);
+    char * test = create_header(pe,2,1,*totalBytes);
+    char * test1 = build_packet(test,pe,*totalBytes);
+    struct packets* pack = build_struct_packet(test1,pe);
 
+  //Stop&wait
+  while(1){
+    if(ack==1){
+      sender.seqnumber = frame_id;
+      sender.frame_ack = 1;
+      sender.ack = 0;
+      printf("Message read%s\n",data);
+      printf("---------Data sending---------\n");
+      sendto(udp_socket,data,strlen(data),0,(struct sockaddr*)&clientaddr,sizeof(clientaddr));
+      printf("Data buffer sent\n");
+    }
+
+    int addr = sizeof(clientaddr);
+    int n = recvfrom(udp_socket,buff, sizeof(data), 0, (struct sockaddr*)NULL,NULL);
+    if(n > 0 && reciever.seqnumber ==0 && reciever.ack == frame_id+1){
+      printf("ACK recieved\n");
+      ack = 0;
+    }
+    frame_id++;
+  }
     //addNodeToList(linkedlist,pack);
     //displayList(pe);
     //free(pack);
@@ -289,9 +325,8 @@ int main(int argc, char* argv[]){
     //free(data);
   }
 
-  //Close socket descriptors
   close(udp_socket);
-  return 0;
+  return EXIT_SUCCESS;
   //displayList();
   //free(data);
 }

@@ -1,0 +1,11 @@
+1. Denne hjemmeeksamen har i grunnen vært utrolig utfordrende, har slitt utrolig mye
+med å lage header og payload for en pakke. Dette gjorde det vanskelig å gå videre i oppgaven også.
+Jeg har prøvd å memcpy verdier inn i en char* men da jeg prøver å printe alle verdiene ble verdiene
+printet helt feil. Jeg vet at dette problemet har oppstått mye på grunn av hvor mye plass jeg allokerer for alle verdiene.
+I metoden create_header har jeg prøvde ulike metoder for å printe verdiene ut og det endte alltid med at kun den første verdien ble skrevet ut riktig,
+men når jeg prøver å legge til en verdi til i neste memcpy vil den ikke legge til denne verdien.
+2. Uansett har jeg skrevet koden som viser min forståelse av oppgaven og håper på at dette kan være ett pluss for denne hjemmeeksamen.
+3. Siden jeg da til slutt ikke hadde en char* packet som jeg kunne sende prøvde jeg isteden for å sende bufferet jeg leser inn pgm filene altså data.
+Her klarer den å sende P2 som er magicnumber av et bildet og width og heigth av bildet til server. Jeg har skrevet i kommentar hvordan jeg ville gjort det for
+en char* hvis det skulle fungert.
+4. Har prøvde så godt jeg kan for å gjøre de delen av eksamen som jeg vet jeg kan som feks. lese fra fil og lagre i buffer.

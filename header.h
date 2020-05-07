@@ -20,36 +20,41 @@
 #define TIMEOUT 5
 #define MAX 1024
 
-struct payload{
+typedef struct payload{
   char* filename;
   char* data;
   int uniqnumber;
   unsigned char filelen;
-};struct payload *pay;
+}pack;
 
-struct packets{
+typedef struct packets{
+  int frame_ack;
   unsigned char seqnumber;
   char* packet;
+  unsigned char ack;
+  unsigned char flagg;
   struct packets *next;
-};
+}Frame;
 
 int f;
 int* totalBytes;
 char* data;
 char* header;
 char *packet;
+char* ack[1000];
 char* buffer[1000];
 char* buffer1[1000];
-unsigned long filelen;
+int udp_socket;
 
 struct packets** linkedlist;
 struct packets *point;
 struct in_addr address;
+struct payload *pakke = NULL;
+struct payload *pay;
 
 int runudp();
 void displayList();
 void validateargs();
-int filesize(char*);
 char* readPGM(char*);
 void read_file(char*);
 void read_directory();
@@ -59,4 +64,4 @@ void removeNode(struct packets **, int);
 struct payload* create_payload(char*,int,int);
 void addNodeToList(struct packets**, struct packets*);
 struct packets* build_struct_packet(char*, struct payload*);
-char* create_header(struct payload*, unsigned char,unsigned char,int);
+char* create_header(struct payload*,unsigned char,unsigned char,int);
