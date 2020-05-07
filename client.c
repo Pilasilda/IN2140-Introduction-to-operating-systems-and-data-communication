@@ -1,4 +1,12 @@
  #include "header.h"
+//Method for freeing buffer
+void bufferFree(int t, char* buffer[]){
+  int i;
+  for(i=0; i <t; i++){
+    free(buffer[i]);
+  }
+}
+
 //method for validating commandline arguments
 void validate(int argc,char*argv[]){
   int test;
@@ -170,7 +178,6 @@ char* create_header(struct payload *payload,unsigned char last_number,unsigned c
   memcpy(header + sizeof(int) + sizeof(char) + sizeof(char) + sizeof(char) + sizeof(char), pay, 1);
 
   return header;
-  free(header);
 }
 
 struct packets* build_struct_packet(char* tmp, struct payload* uid){
@@ -317,14 +324,18 @@ int main(int argc, char* argv[]){
   }
     //addNodeToList(linkedlist,pack);
     //displayList(pe);
-    //free(pack);
-    //free(test1);
-    //free(test);
+    free(pack);
+    free(test1);
+    free(test);
     //removeNode(linkedlist,pe->uniqnumber);
-    //free(totalBytes);
-    //free(data);
+    free(pe->data);
+    free(pe);
+    free(totalBytes);
+    free(data);
   }
-
+  free(linkedlist);
+  bufferFree(t,buffer1);
+  bufferFree(t, buffer);
   close(udp_socket);
   return EXIT_SUCCESS;
   //displayList();
