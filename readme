@@ -9,3 +9,7 @@ men når jeg prøver å legge til en verdi til i neste memcpy vil den ikke legge
 Her klarer den å sende P2 som er magicnumber av et bildet og width og heigth av bildet til server. Jeg har skrevet i kommentar hvordan jeg ville gjort det for
 en char* hvis det skulle fungert.
 4. Har prøvde så godt jeg kan for å gjøre de delen av eksamen som jeg vet jeg kan som feks. lese fra fil og lagre i buffer.
+5. I server når jeg får pakken ville jeg først ha lest data fra buffer kalt på image create for å lage et objekt av en bilde fil. Ville så åpnet directory
+brukt kalt image_compare og sendt med objektet som lages ved kallet over og et objekt fra directory som jeg leser. Ville så skrevet disse til fil. Write_to file har
+jeg da skrevet som et eksempel på hvordan den skal se ut.
+6. Når det gjelder minne håndtering har jeg freet alt som skal freet, men pågrunn av krasj ved kjøring er det ikke mulig å se om alt har blitt free.

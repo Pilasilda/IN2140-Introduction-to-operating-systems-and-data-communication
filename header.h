@@ -39,6 +39,7 @@ typedef struct packets{
 int f;
 int* totalBytes;
 char* data;
+char* buff;
 char* header;
 char *packet;
 char* ack[1000];
@@ -60,6 +61,8 @@ char* readPGM(char*);
 void read_file(char*);
 void read_directory();
 int count_lines(char*);
+void write_tofile(char*);
+void read_dir();
 void display(struct payload*);
 void removeNode(struct packets **, int);
 struct payload* create_payload(char*,int,int);

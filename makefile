@@ -10,7 +10,7 @@ all: $(BINARIES)
 server: server.c
 	$(CC) $(CFLAGS) $^ -o $@
 
-client: client.c 
+client: client.c
 	$(CC) $(CFLAGS) $^ -o $@
 
 clean:

@@ -1,4 +1,5 @@
  #include "header.h"
+
 //Method for freeing buffer
 void bufferFree(int t, char* buffer[]){
   int i;
@@ -247,14 +248,11 @@ void displayList(struct packets* pack){
 
 int main(int argc, char* argv[]){
   validate(argc,argv);
-  char ch;
-  int i,j,k,udp_socket;
-  int s;
-  long b,c;
+  int i,udp_socket;
   struct sockaddr_in clientaddr;
   struct in_addr address;
   char*buff[255];
-  int frame_id;
+  int frame_id=0;
   Frame sender;
   Frame reciever;
   int ack = 1;
@@ -274,7 +272,6 @@ int main(int argc, char* argv[]){
   int t = count_lines(argv[3]);
   read_file(argv[3]);
   read_directory();
-  int uniq = 1;
   linkedlist = malloc(sizeof(struct payload)*t);
 
   //how i would have done it
@@ -314,7 +311,6 @@ int main(int argc, char* argv[]){
       printf("Data buffer sent\n");
     }
 
-    int addr = sizeof(clientaddr);
     int n = recvfrom(udp_socket,buff, sizeof(data), 0, (struct sockaddr*)NULL,NULL);
     if(n > 0 && reciever.seqnumber ==0 && reciever.ack == frame_id+1){
       printf("ACK recieved\n");

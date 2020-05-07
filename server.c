@@ -14,10 +14,25 @@ void validateargs(int argc,char*argv[]){
 
 }
 
+//Method to write information to file
+void write_tofile(char* buffer){
+  FILE* ptr;
+
+  ptr = fopen("output.txt","w");
+  if(ptr == NULL){
+    printf("Error!\n");
+    exit(1);
+  }
+
+  fgets(buffer,sizeof(buffer),stdin);
+  fprintf(ptr, "%s\n", buffer);
+  fclose(ptr);
+  return;
+}
+
 int main(int argc, char* argv[]){
   validateargs(argc,argv);
   int socketfd,length;
-  char* buffer = malloc(sizeof(data));
   char* packet = "Got your packet";
   struct sockaddr_in serveraddr;
   struct in_addr adress;
@@ -41,9 +56,11 @@ int main(int argc, char* argv[]){
 
   length = recvfrom(socketfd, (char*)buffer,sizeof(buffer),0,(struct sockaddr*)&serveraddr,NULL);
 
-  buffer[length] = '\0';
-  printf("Client: %s\n", buffer);
+  buff[length] = '\0';
+  printf("Client: %s\n", buff);
   sendto(socketfd, packet,strlen(packet),0,(struct sockaddr*)NULL,sizeof(serveraddr));
+
+  write_tofile(buff);
   return 0;
 
 
