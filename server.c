@@ -33,6 +33,7 @@ void write_tofile(char* buffer){
 int main(int argc, char* argv[]){
   validateargs(argc,argv);
   int socketfd,length;
+  char* buffer = malloc(sizeof(data));
   char* packet = "Got your packet";
   struct sockaddr_in serveraddr;
   struct in_addr adress;
@@ -56,11 +57,9 @@ int main(int argc, char* argv[]){
 
   length = recvfrom(socketfd, (char*)buffer,sizeof(buffer),0,(struct sockaddr*)&serveraddr,NULL);
 
-  buff[length] = '\0';
-  printf("Client: %s\n", buff);
+  buffer[length] = '\0';
+  printf("Client: %s\n", buffer);
   sendto(socketfd, packet,strlen(packet),0,(struct sockaddr*)NULL,sizeof(serveraddr));
-
-  write_tofile(buff);
   return 0;
 
 
@@ -81,5 +80,18 @@ int main(int argc, char* argv[]){
     }
     frame_id++;
   }*/
+
+  /*
+  int unpack(unsigned char *buff){
+    unsigned int i = ((unsigned int)buff[0]<<) | buff[1];
+    int e;
+
+    if(i <= 0x7fffu){
+      e=i;
+  }else{
+    e = -1 - (int)(0xffffu - i);
+  }
+  return e;
+}*/
   close(socketfd);
 }

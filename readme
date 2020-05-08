@@ -1,8 +1,8 @@
 1. Denne hjemmeeksamen har i grunnen vært utrolig utfordrende, har slitt utrolig mye
 med å lage header og payload for en pakke. Dette gjorde det vanskelig å gå videre i oppgaven også.
 Jeg har prøvd å memcpy verdier inn i en char* men da jeg prøver å printe alle verdiene ble verdiene
-printet helt feil. Jeg vet at dette problemet har oppstått mye på grunn av hvor mye plass jeg allokerer for alle verdiene.
-I metoden create_header har jeg prøvde ulike metoder for å printe verdiene ut og det endte alltid med at kun den første verdien ble skrevet ut riktig,
+printet helt feil. Jeg vet at dette problemet har oppstått mye på grunn av hvor mye plass jeg allokerer for alle verdiene, men som jeg kan skjonne har jeg allokert
+saa mye som trengs for aa memcpy. I metoden create_header har jeg prøvde ulike metoder for å printe verdiene ut og det endte alltid med at kun den første verdien ble skrevet ut riktig,
 men når jeg prøver å legge til en verdi til i neste memcpy vil den ikke legge til denne verdien.
 2. Uansett har jeg skrevet koden som viser min forståelse av oppgaven og håper på at dette kan være ett pluss for denne hjemmeeksamen.
 3. Siden jeg da til slutt ikke hadde en char* packet som jeg kunne sende prøvde jeg isteden for å sende bufferet jeg leser inn pgm filene altså data.
@@ -12,4 +12,6 @@ en char* hvis det skulle fungert.
 5. I server når jeg får pakken ville jeg først ha lest data fra buffer kalt på image create for å lage et objekt av en bilde fil. Ville så åpnet directory
 brukt kalt image_compare og sendt med objektet som lages ved kallet over og et objekt fra directory som jeg leser. Ville så skrevet disse til fil. Write_to file har
 jeg da skrevet som et eksempel på hvordan den skal se ut.
+5.1 Før steg 5 er det en vikti del som jeg tror jeg kommer til å ha måttet gjøre hvis jeg hadde fullført oppgaven og det er bitoperasjoner. Siden pakken vår inneholder
+både unsigned char og int, regner jeg med at jeg må utføre noe bitoperasjoner for å kunne pakke ut pakken vi mottar.
 6. Når det gjelder minne håndtering har jeg freet alt som skal freet, men pågrunn av krasj ved kjøring er det ikke mulig å se om alt har blitt free.

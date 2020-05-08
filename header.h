@@ -62,7 +62,6 @@ void read_file(char*);
 void read_directory();
 int count_lines(char*);
 void write_tofile(char*);
-void read_dir();
 void display(struct payload*);
 void removeNode(struct packets **, int);
 struct payload* create_payload(char*,int,int);
